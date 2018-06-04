@@ -1,8 +1,8 @@
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
-import torchvision
-import ndf
+import torchvision # for data
+import ndf # for Neural Decision Forest Model
 
 # hyper-parameters
 batch_size = 128
@@ -13,11 +13,14 @@ tree_feature_rate = 0.5
 lr = 0.001
 epochs = 10
 report_every = 10
+shallow = False
 
+# change gpuid to use GPU
 cuda = 0 
 gpuid = -1
 n_class = 10
 
+# return normalized dataset divided into two sets
 def prepare_db():
     train_dataset = torchvision.datasets.MNIST('./data/mnist', train=True, download=True,
                                                transform=torchvision.transforms.Compose([
@@ -33,7 +36,7 @@ def prepare_db():
     return {'train':train_dataset,'eval':eval_dataset}        
 
 def prepare_model():
-    feat_layer = ndf.FeatureLayer(feat_dropout)
+    feat_layer = ndf.FeatureLayer(feat_dropout, shallow)
     forest = ndf.Forest(n_tree=n_tree,tree_depth=tree_depth,n_in_feature=feat_layer.get_out_feature_size(),
                         tree_feature_rate=tree_feature_rate,n_class=n_class)
     model = ndf.NeuralDecisionForest(feat_layer,forest)

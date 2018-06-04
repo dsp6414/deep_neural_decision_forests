@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 
 class FeatureLayer(nn.Sequential):
-    def __init__(self,dropout_rate,shallow=False):
+    def __init__(self,dropout_rate, shallow):
         super(FeatureLayer, self).__init__()
         self.shallow = shallow
         if shallow:
@@ -28,6 +28,8 @@ class FeatureLayer(nn.Sequential):
             self.add_module('drop3', nn.Dropout(dropout_rate))
 
     def get_out_feature_size(self):
+        # depends on the structure of the model
+        # change it accordingly if you change the model
         if self.shallow:
             return 64*4*4
         else:
@@ -46,8 +48,8 @@ class Tree(nn.Module):
         using_idx = np.random.choice(np.arange(n_in_feature), n_used_feature, replace=False)
         self.feature_mask = onehot[using_idx].T
         self.feature_mask = Parameter(torch.from_numpy(self.feature_mask).type(torch.FloatTensor),requires_grad=False)
-        # leaf label distribution
 
+        # leaf label distribution
         self.pi = np.random.rand(self.n_leaf,n_class)
         self.pi = Parameter(torch.from_numpy(self.pi).type(torch.FloatTensor),requires_grad=True)
         
@@ -86,7 +88,6 @@ class Tree(nn.Module):
             end_idx = begin_idx + 2 ** (n_layer+1)
 
         mu = _mu.view(batch_size,self.n_leaf)
-
         return mu
 
     def get_pi(self):
@@ -123,7 +124,6 @@ class Forest(nn.Module):
             probs.append(p.unsqueeze(2))
         probs = torch.cat(probs,dim=2)
         prob = torch.sum(probs,dim=2)/self.n_tree
-
         return prob
 
 class NeuralDecisionForest(nn.Module):
